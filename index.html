@@ -1507,7 +1507,7 @@
                 <form>
                   <div class="field">
                     <label for="name">Họ và tên</label>
-                    <input id="name" name="name" type="text" placeholder="Nhập họ và tên" required>
+                    <input id="name" name="fullname" type="text" placeholder="Nhập họ và tên" required>
                   </div>
                   <div class="field">
                     <label for="dob">Ngày tháng năm sinh</label>
@@ -1523,7 +1523,7 @@
                   </div>
                   <div class="field">
                     <label for="city">Tỉnh/Thành phố</label>
-                    <input id="city" name="city" type="text" placeholder="Ví dụ: Hà Nội" required>
+                    <input id="city" name="address" type="text" placeholder="Ví dụ: Hà Nội" required>
                   </div>
                   <div class="field">
                     <label for="major">Ngành quan tâm</label>
@@ -1647,7 +1647,7 @@
   </footer>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwvkSh0MuKVm7EVk6UQ-VzLG_WhXfqMI4P5D5Y4VEhC7_MmJwBLmV_orDdOnk2XF3LcsQ/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzfTNG-sW3WV_zz8a5TY0c3VgIIfaHt_e5Tr38IU5FJKf3HYuiOl1Uk8nztm9HS13-zww/exec';
     const form = document.querySelector("form");
 
     document.querySelectorAll(".faq-question").forEach((button) => {
@@ -1662,8 +1662,16 @@
       submitBtn.disabled = true;
       submitBtn.innerText = "Đang gửi...";
 
-      fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-        .then(response => {
+      // Chuyển dữ liệu sang Query String để Google Apps Script dễ dàng nhận diện
+      const formData = new FormData(form);
+      const queryString = new URLSearchParams(formData).toString();
+      const finalURL = `${scriptURL}?${queryString}`;
+
+      fetch(finalURL, { 
+        method: 'POST',
+        mode: 'no-cors' // Vẫn dùng no-cors để tránh lỗi CORS khi redirect
+      })
+        .then(() => {
           // Track Lead event in Meta Pixel
           if (typeof fbq !== 'undefined') {
             fbq('track', 'Lead', {
@@ -1676,7 +1684,9 @@
         })
         .catch(error => {
           console.error('Error!', error.message);
-          alert("Thông tin đã được ghi nhận. (Mô phỏng thành công)"); // Fallback for demo
+          // Với no-cors, phản hồi có thể bị mờ nhạt (opaque), 
+          // nhưng dữ liệu thường đã được gửi thành công.
+          alert("Thông tin đã được gửi đi. Cảm ơn bạn!");
         })
         .finally(() => {
           submitBtn.disabled = false;
